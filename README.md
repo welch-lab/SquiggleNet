@@ -17,7 +17,7 @@ SquiggleNet is a 1D ResNet based model to classify Oxford Nanopore raw electrica
 
 
 ## Inference
-Use a pertained model (two are available in the models folder, you could also use your own pertained model) to make inference on fast5 files.
+Use a pretained model (two are available in the models folder, you could also use your own pretained model) to make inference on fast5 files.
 
 Options:
 ```python
@@ -37,7 +37,7 @@ python inference.py -m models/model_B4t2_3000_tot32.ckpt -i myfolder/fast5 -o ou
 ## Training
 
 ### Preprocessing
-To accelerate the training process, the training dataset needs to be preprocessed into well-formatted torch tensor. This requires ground truth labels for each read ID, input as two lists of read IDs respectively. The ground truth labels could be obtained through various ways, such as barcode labeling during sample preparation or running based called samples against Minimap2 or other alignment algorithms (this method could contain systematic errors caused by the alignment algorithm of your choice). 
+To accelerate the training process, the training dataset needs to be preprocessed into a well-formatted torch tensor. This requires ground truth labels for each read ID, input as two lists of read IDs respectively. The ground truth labels could be obtained through various ways, such as barcode labeling during sample preparation or running basecalled samples against Minimap2 or other alignment algorithms (though this method could introduce systematic errors caused by the alignment algorithm of your choice). 
 
 Example:
 ```bash
@@ -56,7 +56,7 @@ Options:
 ```
 
 ### Training
-Run the trainer using the preprocessed dataset. Program auto detects device and would use GPU whenever available. Options of fine tuning from a pre-trained checkpoint is also available.
+Run the trainer using the preprocessed dataset. Program auto-detects device and uses GPU whenever available. The option of fine tuning from a pre-trained checkpoint is also available.
 
 Example:
 ```bash
