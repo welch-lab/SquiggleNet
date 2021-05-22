@@ -100,7 +100,7 @@ def main(model, infile, outfile, batch, cutoff):
 		data_test, data_name = get_raw_data(infile, fileNM, data_test, data_name, cutoff)
 		it += 1
 
-		if it == batch:
+		if len(data_test)>0 and it == batch:
 			print("[Step 1]$$$$$$$$$$ Done loading data with batch " + str(batchi)+ \
 				", Getting " + str(len(data_test)) + " of sequences")
 			data_test = normalization(data_test, batchi)
