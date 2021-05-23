@@ -98,21 +98,23 @@ def main(model, infile, outfile, batch, cutoff):
 	it = 0
 	for fileNM in glob.glob(infile + '/*.fast5'):
 		data_test, data_name = get_raw_data(infile, fileNM, data_test, data_name, cutoff)
-		it += 1
 
-		if len(data_test)>0 and it == batch:
-			print("[Step 1]$$$$$$$$$$ Done loading data with batch " + str(batchi)+ \
-				", Getting " + str(len(data_test)) + " of sequences")
-			data_test = normalization(data_test, batchi)
-			process(data_test, data_name, batchi, bmodel, outfile, device)
-			print("[Step 4]$$$$$$$$$$ Done with batch " + str(batchi))
-			print()
-			del data_test
-			data_test = []
-			del data_name
-			data_name = []
-			batchi += 1
-			it = 0
+		if len(data_test) > 0:
+			it += 1
+
+			if it == batch:
+				print("[Step 1]$$$$$$$$$$ Done loading data with batch " + str(batchi)+ \
+					", Getting " + str(len(data_test)) + " of sequences")
+				data_test = normalization(data_test, batchi)
+				process(data_test, data_name, batchi, bmodel, outfile, device)
+				print("[Step 4]$$$$$$$$$$ Done with batch " + str(batchi))
+				print()
+				del data_test
+				data_test = []
+				del data_name
+				data_name = []
+				batchi += 1
+				it = 0
 
 	print("[Step FINAL]--- %s seconds ---" % (time.time() - start_time))
 
