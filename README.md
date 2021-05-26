@@ -51,6 +51,7 @@ Options:
   -i, --inpath TEXT     The input fast5 directory path
   -o, --outpath TEXT    The output pytorch tensor directory path
   -b, --batch INTEGER   Batch size, default 10000
+  -b, --trpartition FLOAT   Train partition size, default None
   -c, --cutoff INTEGER  Cutoff the first c signals
   --help                Show this message and exit.
 ```
