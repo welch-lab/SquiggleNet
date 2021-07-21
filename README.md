@@ -17,7 +17,7 @@ SquiggleNet is a 1D ResNet based model to classify Oxford Nanopore raw electrica
 
 
 ## Inference
-Use a pretrained model (two are available in the models folder, or you could use your own pretrained model) to make inference on fast5 files.
+Use a pretrained model (two are available in the models folder, or you could use your own pretrained model) to make inference on fast5 files. To incorporate SquiggleNet into a read-until pipeline, simply run the model on the fast5 files returned by the MinKNOW API, then check the classification results to issue eject commands for the reads classified as non-target.
 
 Options:
 ```python
