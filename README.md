@@ -83,3 +83,5 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
+
+[![DOI](https://zenodo.org/badge/326563198.svg)](https://zenodo.org/badge/latestdoi/326563198)
