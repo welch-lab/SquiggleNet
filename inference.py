@@ -12,6 +12,7 @@ from torch import nn
 from torch.nn import functional as F
 from scipy import stats
 from ont_fast5_api.fast5_interface import get_fast5_file
+import pyslow5
 from model import ResNet
 from model import Bottleneck
 
@@ -56,15 +57,49 @@ def process(data_test, data_name, batchi, bmodel, outfile, device):
 ########################
 #### Load the data #####
 ########################
-def get_raw_data(infile, fileNM, data_test, data_name, cutoff):
-	fast5_filepath = os.path.join(infile, fileNM)
-	with get_fast5_file(fast5_filepath, mode="r") as f5:
-		for read in f5.get_reads():
-			raw_data = read.get_raw_data(scale=True)
-			if len(raw_data) >= (cutoff + 3000):
-				data_test.append(raw_data[cutoff:(cutoff+3000)])
-				data_name.append(read.read_id)
+def get_raw_data(bmodel, batch, fileNM, data_test, data_name, cutoff, format, outfile, device):
+	fast5_filepath = fileNM
+	read_count = 0
+	batchi = 0
+	if format == 'fast5':
+		with get_fast5_file(fast5_filepath, mode="r") as f5:
+			for read in f5.get_reads():
+				raw_data = read.get_raw_data(scale=True)
+				append_data(read.read_id, raw_data, cutoff, data_test, data_name)
+				read_count += 1
+				if read_count == batch:
+					if len(data_test) > 0:
+						predict(data_test, data_name, batchi, bmodel, outfile, device)
+						batchi += 1
+						del data_test
+						data_test = []
+						del data_name
+						data_name = []
+					read_count = 0
+	elif format == 'blow5':
+		print(fast5_filepath)
+		f5 = pyslow5.Open(fast5_filepath, 'r')
+		for read in f5.seq_reads(pA=True):
+			append_data(read['read_id'], read['signal'], cutoff, data_test, data_name)
+			read_count += 1
+			if read_count == batch:
+				if len(data_test) > 0:
+					predict(data_test, data_name, batchi, bmodel, outfile, device)
+					batchi += 1
+					del data_test
+					data_test = []
+					del data_name
+					data_name = []
+				read_count = 0
+	else:
+		print("Invalid raw data format!")
 	return data_test, data_name
+
+
+def append_data(read_id, raw_data, cutoff, data_test, data_name):
+	if len(raw_data) >= (cutoff + 3000):
+		data_test.append(raw_data[cutoff:(cutoff+3000)])
+		data_name.append(read_id)
 
 
 
@@ -75,8 +110,8 @@ def get_raw_data(infile, fileNM, data_test, data_name, cutoff):
 @click.option('--outfile', '-o', help='The output result folder path', type=click.Path())
 @click.option('--batch', '-b', default=1, help='Batch size')
 @click.option('--cutoff', '-c', default=1500, help='Cutoff the first c signals')
-
-def main(model, infile, outfile, batch, cutoff):
+@click.option('--format', '-ft', default='fast5', help='Raw file format (fast5, slow5)', type=str)
+def main(model, infile, outfile, batch, cutoff, format):
 	start_time = time.time()
 	if torch.cuda.is_available:device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 	print("Device: " + str(device))
@@ -94,25 +129,16 @@ def main(model, infile, outfile, batch, cutoff):
 	### load data
 	data_test = []
 	data_name = []
-	batchi = 0
-	it = 0
-	for fileNM in glob.glob(infile + '/*.fast5'):
-		data_test, data_name = get_raw_data(infile, fileNM, data_test, data_name, cutoff)
-		it += 1
 
-		if it == batch:
-			print("[Step 1]$$$$$$$$$$ Done loading data with batch " + str(batchi)+ \
-				", Getting " + str(len(data_test)) + " of sequences")
-			data_test = normalization(data_test, batchi)
-			process(data_test, data_name, batchi, bmodel, outfile, device)
-			print("[Step 4]$$$$$$$$$$ Done with batch " + str(batchi))
-			print()
-			del data_test
-			data_test = []
-			del data_name
-			data_name = []
-			batchi += 1
-			it = 0
+	if format == 'slow5':
+		format = 'blow5'
+
+	if os.path.isdir(infile):
+		infile = infile + '/*.' + format
+
+	start_time = time.time()
+	for fileNM in glob.glob(infile):
+		data_test, data_name = get_raw_data(bmodel, batch, fileNM, data_test, data_name, cutoff, format, outfile, device)
 
 	print("[Step FINAL]--- %s seconds ---" % (time.time() - start_time))
 

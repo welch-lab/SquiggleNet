@@ -26,6 +26,7 @@ Options:
   -o, --outfile PATH    The output result folder path
   -b, --batch INTEGER   Batch size
   -c, --cutoff INTEGER  Cutoff the first c signals
+  -ft, --format STRING  Raw file format (fast5, slow5)  
   --help                Show this message and exit.
 ```
 
@@ -52,6 +53,7 @@ Options:
   -o, --outpath TEXT    The output pytorch tensor directory path
   -b, --batch INTEGER   Batch size, default 10000
   -c, --cutoff INTEGER  Cutoff the first c signals
+  -ft, --format STRING  Raw file format (fast5, slow5)
   --help                Show this message and exit.
 ```
 
