@@ -1,4 +1,5 @@
 from ont_fast5_api.fast5_interface import get_fast5_file
+import pyslow5
 import os
 import glob
 import click
@@ -34,8 +35,8 @@ def normalization(data_test, xi, outpath, pos = True):
 @click.option('--outpath', '-o', help='The output pytorch tensor directory path')
 @click.option('--batch', '-b', default=10000, help='Batch size, default 10000')
 @click.option('--cutoff', '-c', default=1500, help='Cutoff the first c signals')
-
-def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
+@click.option('--format', '-ft', default='fast5', help='Raw file format (fast5, slow5)', type=str)
+def main(gtpos, gtneg, inpath, outpath, batch, cutoff, format):
 	### read in pos and neg ground truth variables
 	my_file_pos = open(gtpos, "r")
 	posli = my_file_pos.readlines()
@@ -51,7 +52,6 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 	if not os.path.exists(outpath):
 		os.makedirs(outpath)
 
-
 	print("##### posli and negli length")
 	print(len(posli))
 	print(len(negli))
@@ -62,16 +62,19 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 	arrpos = []
 	pi = 0
 	ni = 0
-	
-	for fileNM in glob.glob(inpath + '/*.fast5'):
-		with get_fast5_file(fileNM, mode="r") as f5:
-			print("##### file: " + fileNM)
+
+	if format == 'slow5':
+		format = 'blow5'
+
+	for fileNM in glob.glob(inpath + '/*.' + format):
+		if format == 'fast5':
+			f5 = get_fast5_file(fileNM, mode="r")
 			for read in f5.get_reads():
 				raw_data = read.get_raw_data(scale=True)
 
 				### only parse reads that are long enough
 				if len(raw_data) >= (cutoff + 3000):
-					if read.read_id in posli:
+					if str(read.read_id) in posli:
 						pi += 1
 						arrpos.append(raw_data[cutoff:(cutoff + 3000)])
 						if (pi%batch == 0) and (pi != 0):
@@ -79,13 +82,40 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 							del arrpos
 							arrpos = []
 
-					if read.read_id in negli:
+					if str(read.read_id) in negli:
+						ni += 1
+						arrneg.append(raw_data[cutoff:(cutoff + 3000)])
+						if (ni % batch == 0) and (ni != 0):
+							normalization(arrneg, ni, outpath, pos=False)
+							del arrneg
+							arrneg = []
+		elif format == 'blow5':
+			f5 = pyslow5.Open(fileNM, 'r')
+			print("##### file: " + fileNM)
+			for read in f5.seq_reads(pA=True):
+				# print(read['read_id'])
+				raw_data = read['signal']
+
+				### only parse reads that are long enough
+				if len(raw_data) >= (cutoff + 3000):
+					if read['read_id'] in posli:
+						pi += 1
+						arrpos.append(raw_data[cutoff:(cutoff + 3000)])
+						if (pi % batch == 0) and (pi != 0):
+							normalization(arrpos, pi, outpath, pos=True)
+							del arrpos
+							arrpos = []
+					elif read['read_id'] in negli:
 						ni += 1
 						arrneg.append(raw_data[cutoff:(cutoff + 3000)])
 						if (ni%batch == 0) and (ni != 0):
 							normalization(arrneg, ni, outpath, pos = False)
 							del arrneg
 							arrneg = []
+		else:
+			print("Invalid raw data format!")
+		print("positive reads", pi)
+		print("negative reads", ni)
 
 
 if __name__ == '__main__':
