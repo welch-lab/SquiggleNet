@@ -92,7 +92,7 @@ class ResNet(nn.Module):
 		layers = []
 		layers.append(block(self.chan1, channels, stride, downsample))
 		if stride != 1 or self.chan1 != channels:
-		  self.chan1 = channels
+			self.chan1 = channels
 		for _ in range(1, blocks):
 			layers.append(block(self.chan1, channels))
 

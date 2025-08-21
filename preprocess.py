@@ -6,6 +6,10 @@ import torch
 import numpy as np
 from scipy import stats
 
+from file_types.fast5_file import Fast5File, Fast5Read
+from file_types.pod5_file import Pod5File, Pod5Read
+from file_types.signal_file import SignalFile, SignalRead
+
 
 def normalization(data_test, xi, outpath, pos = True):
 	mad = stats.median_abs_deviation(data_test, axis=1, scale='normal')
@@ -63,15 +67,32 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 	pi = 0
 	ni = 0
 	
-	for fileNM in glob.glob(inpath + '/*.fast5'):
-		with get_fast5_file(fileNM, mode="r") as f5:
+	file_types = {
+		'fast5': (Fast5File, Fast5Read),
+		'pod5': (Pod5File, Pod5Read)
+    }
+	
+    # This approach does allow for mixing of file types 
+    # but that is almost always undesirable and impractical. It is
+	# upto the user to ensure seperation of file types. This
+	# code is only to ensure that the file types are automatically 
+	# detected and handled without need for user intervention.
+	files = []
+	for ft, _ in file_types:
+		files.append(glob.glob(inpath + f'/*.{ft}'))
+	
+	for fileNM in files:
+		file_type = fileNM.split('.')[-1]
+		FileClass, ReadClass = file_types[file_type]
+		with FileClass(fileNM) as f:
 			print("##### file: " + fileNM)
-			for read in f5.get_reads():
-				raw_data = read.get_raw_data(scale=True)
+			for r in f.get_reads():
+				read = ReadClass(r)
+				raw_data = read.get_raw_signal_pA()
 
 				### only parse reads that are long enough
 				if len(raw_data) >= (cutoff + 3000):
-					if read.read_id in posli:
+					if read.get_read_id() in posli:
 						pi += 1
 						arrpos.append(raw_data[cutoff:(cutoff + 3000)])
 						if (pi%batch == 0) and (pi != 0):
@@ -79,7 +100,7 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 							del arrpos
 							arrpos = []
 
-					if read.read_id in negli:
+					if read.get_read_id() in negli:
 						ni += 1
 						arrneg.append(raw_data[cutoff:(cutoff + 3000)])
 						if (ni%batch == 0) and (ni != 0):

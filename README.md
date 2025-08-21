@@ -13,7 +13,7 @@ SquiggleNet is a 1D ResNet based model to classify Oxford Nanopore raw electrica
 - Glob
 - Click
 - Ont_fast5_api
-
+- Pod5
 
 
 ## Inference

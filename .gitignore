@@ -1,3 +1,4 @@
 scripts
 out/
 __pycache__/
+.vscode/
