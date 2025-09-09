@@ -33,7 +33,8 @@ class Fast5File(SignalFile):
 
     @override
     def __enter__(self):
-        return self.f5File.__enter__()
+        self.f5File.__enter__()
+        return self
     
     @override
     def __exit__(self, exc_type, exc_value, traceback):

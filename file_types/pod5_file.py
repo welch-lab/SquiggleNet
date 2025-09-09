@@ -15,7 +15,7 @@ class Pod5Read(SignalRead):
     
     @override
     def get_read_id(self):
-        return self.read.read_id
+        return str(self.read.read_id)
     
     @override
     def get_raw_signal_pA(self):
@@ -32,7 +32,8 @@ class Pod5File(SignalFile):
 
     @override
     def __enter__(self):
-        return self.reader.__enter__()
+        self.reader.__enter__()
+        return self
 
     @override    
     def __exit__(self, exc_type, exc_value, traceback):

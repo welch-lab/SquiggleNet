@@ -78,16 +78,15 @@ def main(gtpos, gtneg, inpath, outpath, batch, cutoff):
 	# code is only to ensure that the file types are automatically 
 	# detected and handled without need for user intervention.
 	files = []
-	for ft, _ in file_types:
-		files.append(glob.glob(inpath + f'/*.{ft}'))
+	for ft in file_types:
+		files.extend(glob.glob(inpath + f'/*.{ft}'))
 	
 	for fileNM in files:
 		file_type = fileNM.split('.')[-1]
-		FileClass, ReadClass = file_types[file_type]
+		FileClass, _ = file_types[file_type]
 		with FileClass(fileNM) as f:
 			print("##### file: " + fileNM)
-			for r in f.get_reads():
-				read = ReadClass(r)
+			for read in f.get_reads():
 				raw_data = read.get_raw_signal_pA()
 
 				### only parse reads that are long enough
