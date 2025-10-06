@@ -52,6 +52,7 @@ Options:
   -o, --outpath TEXT    The output pytorch tensor directory path
   -b, --batch INTEGER   Batch size, default 10000
   -c, --cutoff INTEGER  Cutoff the first c signals
+  -r, --ratio FLOAT     Ratio of reads for training per batch (rest is for validation, selected (pseudo)randomly)
   --help                Show this message and exit.
 ```
 
