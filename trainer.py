@@ -39,11 +39,11 @@ def main(ttrain, tval, ntrain, nval, outpath, interm, batch, epoch, learningrate
 	validation_set = Dataset(tval, nval)
 	validation_generator = DataLoader(validation_set, **params)
 
-	zymo_train = torch.load(ttrain)
-	hela_train = torch.load(ntrain)
+	# zymo_train = torch.load(ttrain)
+	# hela_train = torch.load(ntrain)
 
-	zymo_val = torch.load(tval)
-	hela_val = torch.load(nval)
+	# zymo_val = torch.load(tval)
+	# hela_val = torch.load(nval)
 
 	### load model
 	model = ResNet(Bottleneck, [2,2,2,2]).to(device)
