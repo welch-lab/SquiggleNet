@@ -15,6 +15,9 @@ from ont_fast5_api.fast5_interface import get_fast5_file
 from model import ResNet
 from model import Bottleneck
 
+from file_types.fast5_file import Fast5File, Fast5Read
+from file_types.pod5_file import Pod5File, Pod5Read
+from file_types.signal_file import SignalFile, SignalRead
 
 ########################
 ##### Normalization ####
@@ -56,27 +59,31 @@ def process(data_test, data_name, batchi, bmodel, outfile, device):
 ########################
 #### Load the data #####
 ########################
-def get_raw_data(infile, fileNM, data_test, data_name, cutoff):
-	fast5_filepath = os.path.join(infile, fileNM)
-	with get_fast5_file(fast5_filepath, mode="r") as f5:
-		for read in f5.get_reads():
-			raw_data = read.get_raw_data(scale=True)
+def get_raw_data(fileNM, data_test, data_name, cutoff):	
+	file_types = {
+		'fast5': (Fast5File, Fast5Read),
+		'pod5': (Pod5File, Pod5Read)
+    }
+	file_type = fileNM.split('.')[-1]
+	FileClass, _ = file_types[file_type]
+	with FileClass(fileNM) as f:
+		for read in f.get_reads():
+			raw_data = read.get_raw_signal_pA()
 			if len(raw_data) >= (cutoff + 3000):
 				data_test.append(raw_data[cutoff:(cutoff+3000)])
-				data_name.append(read.read_id)
+				data_name.append(read.get_read_id())
 	return data_test, data_name
-
 
 
 
 @click.command()
 @click.option('--model', '-m', help='The pretrained model path and name', type=click.Path(exists=True))
-@click.option('--infile', '-i', help='The input fast5 folder path', type=click.Path(exists=True))
+@click.option('--inpath', '-i', help='The input folder path for fast5 or pod5 files (but not both)', type=click.Path(exists=True))
 @click.option('--outfile', '-o', help='The output result folder path', type=click.Path())
 @click.option('--batch', '-b', default=1, help='Batch size')
 @click.option('--cutoff', '-c', default=1500, help='Cutoff the first c signals')
 
-def main(model, infile, outfile, batch, cutoff):
+def main(model, inpath, outfile, batch, cutoff):
 	start_time = time.time()
 	if torch.cuda.is_available:device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 	print("Device: " + str(device))
@@ -96,8 +103,23 @@ def main(model, infile, outfile, batch, cutoff):
 	data_name = []
 	batchi = 0
 	it = 0
-	for fileNM in glob.glob(infile + '/*.fast5'):
-		data_test, data_name = get_raw_data(infile, fileNM, data_test, data_name, cutoff)
+
+	file_types = {
+		'fast5': (Fast5File, Fast5Read),
+		'pod5': (Pod5File, Pod5Read)
+    }
+
+	# This approach does allow for mixing of file types 
+    # but that is almost always undesirable and impractical. It is
+	# upto the user to ensure seperation of file types. This
+	# code is only to ensure that the file types are automatically 
+	# detected and handled without need for user intervention.
+	files = []
+	for ft in file_types:
+		files.extend(glob.glob(inpath + f'/*.{ft}'))
+
+	for fileNM in files:
+		data_test, data_name = get_raw_data(fileNM, data_test, data_name, cutoff)
 		it += 1
 
 		if it == batch:
